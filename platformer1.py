@@ -59,6 +59,7 @@ def draw_text(text, font, text_col, x, y):
 #функция обновления уровня
 def reset_level(level):
     player.reset(100, screen_height - 120)
+    player2.reset(100, screen_height - 120)
     blob_group.empty()
     platform_group.empty()
     lava_group.empty()
@@ -114,11 +115,11 @@ class Player():
         if game_over == 0:
             #управление игроком
             key = pygame.key.get_pressed()
-            if key[pygame.K_SPACE] and self.jumped == False and self.in_air == False:
+            if key[pygame.K_UP] and self.jumped == False and self.in_air == False:
                 jump_fx.play()
                 self.vel_y = -15
                 self.jumped = True
-            if key[pygame.K_SPACE] == False:
+            if key[pygame.K_UP] == False:
                 self.jumped = False
             if key[pygame.K_LEFT]:
                 dx -= 5
@@ -244,6 +245,152 @@ class Player():
         self.jumped = False
         self.direction = 0
         self.in_air = True
+
+class Player2():
+    def __init__(self, x, y):
+        self.reset(x, y)
+
+    def update(self, game_over):
+        
+        dx = 0
+        dy = 0
+        walk_cooldown = 5
+        col_thresh = 20
+
+        if game_over == 0:
+            #управление игроком 2
+            key = pygame.key.get_pressed()
+            if key[pygame.K_w] and self.jumped == False and self.in_air == False:
+                jump_fx.play()
+                self.vel_y = -15
+                self.jumped = True
+            if key[pygame.K_w] == False:
+                self.jumped = False
+            if key[pygame.K_a]:
+                dx -= 5
+                self.counter += 1
+                self.direction = -1
+            if key[pygame.K_d]:
+                dx += 5
+                self.counter += 1
+                self.direction = 1
+            if key[pygame.K_a] == False and key[pygame.K_d] == False:
+                self.counter = 0
+                self.index = 0
+                if self.direction == 1:
+                    self.image = self.images_right[self.index]
+                if self.direction == -1:
+                    self.image = self.images_left[self.index]
+            
+            #гравитация
+            self.vel_y += 1
+            if self.vel_y > 10:
+                self.vel_y = 10
+            dy += self.vel_y
+
+            #анимация
+            if self.counter > walk_cooldown:
+                self.counter = 0
+                self.index += 1
+                if self.index >= len(self.images_right):
+                    self.index = 0
+                if self.direction == 1:
+                    self.image = self.images_right[self.index]
+                if self.direction == -1:
+                    self.image = self.images_left[self.index]
+                
+            #проверка на столкновение
+            self.in_air = True
+            for tile in world.tile_list:
+                #проверка на столконвение по оси X
+                if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                    dx = 0
+                #проверка на столконвение по оси Y
+                if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+                    #находится ли игрок под землёй (прыжок)
+                    if self.vel_y < 0:
+                        dy = tile[1].bottom - self.rect.top
+                        self.vel_y = 0
+                    #находится ли игрок над землёй (падение)
+                    elif self.vel_y >= 0:
+                        dy = tile[1].top - self.rect.bottom
+                        self.vel_y = 0
+                        self.in_air = False
+
+            #проверка на столкновение с врагами
+            if pygame.sprite.spritecollide(self, blob_group, False):
+                game_over = -1
+                game_over_fx.play()
+            
+            #проверка на столкновение с лавой
+            if pygame.sprite.spritecollide(self, lava_group, False):
+                game_over = -1
+                game_over_fx.play()
+
+            #проверка на столкновение с выходом
+            if pygame.sprite.spritecollide(self, exit_group, False):
+                game_over = 1
+
+            #проверка на столкновение с платформой
+            for platform in platform_group:
+                #столкновения по оси X
+                if platform.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                    dx = 0
+                #столкновения по оси X
+                if platform.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+                    #проверка, есть ли под игроком платформа
+                    if abs((self.rect.top + dy) - platform.rect.bottom) < col_thresh:
+                        self.vel_y = 0
+                        dy = platform.rect.bottom - self.rect.top
+                    #проверка, есть ли под игроком платформа
+                    elif abs((self.rect.bottom + dy) - platform.rect.top) < col_thresh:
+                        self.rect.bottom = platform.rect.top - 1
+                        dy = 0
+                        self.in_air = False
+                        dy = 0
+                    #вбок вместе с платформой
+                    if platform.move_x != 0:
+                        self.rect.x += platform.move_direction
+                
+            #отрегулировать позицию игрока
+            self.rect.x += dx
+            self.rect.y += dy
+
+        elif game_over == -1:
+            self.image = self.dead_image
+            if self.rect.y > 200:
+                self.rect.y -= 5
+        
+        #нарисуем игрока в окне
+        screen.blit(self.image, self.rect)
+        #pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
+
+        return game_over
+
+    def reset(self, x, y):
+        self.images_right = []
+        self.images_left = []
+        self.index = 0
+        self.counter = 0
+        for num in range(1, 5):
+            img_right = pygame.image.load(f'img/guy{num}.png')
+            img_right = pygame.transform.scale(img_right, (40, 70))
+            img_left = pygame.transform.flip(img_right, True, False) #переворачивание по оси X
+            self.images_right.append(img_right)
+            self.images_left.append(img_left)
+        self.dead_image = pygame.image.load('img/ghost.png')
+        self.image = self.images_right[self.index]
+        self.image = pygame.transform.scale(img_right, (40, 70))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+        self.vel_y = 0
+        self.jumped = False
+        self.direction = 0
+        self.in_air = True
+
 
 class World():
     def __init__(self, data):
@@ -390,6 +537,7 @@ world_data = [
 '''
 
 player = Player(100, screen_height - 120) #70 + 50 = 120
+player2 = Player2(100, screen_height - 120)
 
 blob_group = pygame.sprite.Group()
 platform_group = pygame.sprite.Group()
@@ -436,6 +584,9 @@ while run:
             if pygame.sprite.spritecollide(player, coin_group, True):
                 score += 1
                 coin_fx.play()
+            if pygame.sprite.spritecollide(player2, coin_group, True):
+                score += 1
+                coin_fx.play()
             draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
 
         blob_group.draw(screen)
@@ -445,6 +596,7 @@ while run:
         exit_group.draw(screen)
         
         game_over = player.update(game_over)
+        game_over = player2.update(game_over)
     
         #если игрок умер
         if game_over == -1:
