@@ -24,7 +24,7 @@ font_score = pygame.font.SysFont('Bauhaus 93', 30)
 tile_size = 50
 game_over = 0
 main_menu = True
-level = 3
+level = 0
 max_levels = 7
 score = 0
 
@@ -40,6 +40,10 @@ start_img = pygame.image.load('img/start_btn.png')
 start_img = pygame.transform.scale(start_img, (300, 100))
 exit_img = pygame.image.load('img/exit_btn.png')
 exit_img = pygame.transform.scale(exit_img, (300, 100))
+level1_img = pygame.image.load('img/level1_btn.png')
+level1_img = pygame.transform.scale(level1_img, (200, 200))
+level2_img = pygame.image.load('img/level2_btn.png')
+level2_img = pygame.transform.scale(level2_img, (200, 200))
 
 #загрузка звуков
 pygame.mixer.music.load('img/music.wav')
@@ -183,8 +187,8 @@ class Player():
                 game_over_fx.play()
 
             #проверка на столкновение с выходом
-            if pygame.sprite.spritecollide(self, exit_group, False):
-                game_over = 1
+            #if pygame.sprite.spritecollide(self, exit_group, False):
+            #    game_over = 1
 
             #проверка на столкновение с платформой
             for platform in platform_group:
@@ -245,6 +249,10 @@ class Player():
         self.jumped = False
         self.direction = 0
         self.in_air = True
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+
 
 class Player2():
     def __init__(self, x, y):
@@ -328,8 +336,8 @@ class Player2():
                 game_over_fx.play()
 
             #проверка на столкновение с выходом
-            if pygame.sprite.spritecollide(self, exit_group, False):
-                game_over = 1
+            #if pygame.sprite.spritecollide(self, exit_group, False):
+            #    game_over = 1
 
             #проверка на столкновение с платформой
             for platform in platform_group:
@@ -390,6 +398,9 @@ class Player2():
         self.jumped = False
         self.direction = 0
         self.in_air = True
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
 
 
 class World():
@@ -559,6 +570,8 @@ world = World(world_data)
 restart_button = Button(screen_width // 2 - 50, screen_height // 2 + 100, restart_img)
 start_button = Button(screen_width // 2 - 350, screen_height // 2, start_img)
 exit_button = Button(screen_width // 2 + 100, screen_height // 2, exit_img)
+level1_btn = Button(screen_width // 2 - 350, screen_height // 2, level1_img)
+level2_btn = Button(screen_width // 2 + 100, screen_height // 2, level2_img)
 
 
 
@@ -576,7 +589,13 @@ while run:
             main_menu = False
     else:
         world.draw()
+        
+        #game_over = player.update(game_over)
+        #game_over = player2.update(game_over)
 
+        if pygame.sprite.spritecollide(player, exit_group, False) and pygame.sprite.spritecollide(player2, exit_group, False):
+                game_over = 1
+                
         if game_over == 0:
             blob_group.update()
             platform_group.update()
@@ -594,10 +613,14 @@ while run:
         lava_group.draw(screen)
         coin_group.draw(screen)
         exit_group.draw(screen)
-        
+
         game_over = player.update(game_over)
         game_over = player2.update(game_over)
-    
+
+        player.draw(screen)
+        player2.draw(screen)
+        
+                
         #если игрок умер
         if game_over == -1:
             draw_text('GAME OVER!', font, blue, (screen_width // 2) - 200, screen_height // 2)
@@ -617,6 +640,8 @@ while run:
                 world_data = []
                 world = reset_level(level)
                 game_over = 0
+                player.reset(100, screen_height - 120)
+                player2.reset(100, screen_height - 120)
             else:
                 draw_text('YOU WIN!', font, blue, (screen_width // 2) - 140, screen_height // 2)
                 #перезапустить игру
