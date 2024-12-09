@@ -54,8 +54,6 @@ exit2_img = pygame.transform.scale(exit_img, (300, 100))
 #загрузка звуков
 pygame.mixer.music.load('img/music.wav')
 pygame.mixer.music.play(-1, 0.0, 5000)
-#coin_fx = pygame.mixer.Sound('img/coin.wav')
-#coin_fx.set_volume(0.5)
 jump_fx = pygame.mixer.Sound('img/jump.wav')
 jump_fx.set_volume(0.5)
 game_over_fx = pygame.mixer.Sound('img/game_over.wav')
@@ -74,7 +72,6 @@ def reset_level(level):
     platform_group.empty()
     lava_group.empty()
     exit_group.empty()
-    #coin_group.empty()
 
     #загрузка данных уровня и создание мира
     if path.exists(f'level{level}_data'):
@@ -229,7 +226,6 @@ class Player():
         
         #нарисуем игрока в окне
         screen.blit(self.image, self.rect)
-        #pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
 
         return game_over
 
@@ -378,7 +374,6 @@ class Player2():
         
         #нарисуем игрока в окне
         screen.blit(self.image, self.rect)
-        #pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
 
         return game_over
 
@@ -448,9 +443,6 @@ class World():
                 if tile == 6:
                     lava = Lava(col_count * tile_size, row_count * tile_size + (tile_size // 2))
                     lava_group.add(lava)
-                #if tile == 7:
-                #    coin = Coin(col_count * tile_size + (tile_size // 2), row_count * tile_size + (tile_size // 2))
-                #    coin_group.add(coin)
                 if tile == 8:
                     exit = Exit(col_count * tile_size, row_count * tile_size - (tile_size // 2))
                     exit_group.add(exit)
@@ -460,7 +452,6 @@ class World():
     def draw(self):
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
-            #pygame.draw.rect(screen, (255, 255, 255), tile[1], 2)
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -512,15 +503,6 @@ class Lava(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         
-'''
-class Coin(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        img = pygame.image.load('img/coin.png')
-        self.image = pygame.transform.scale(img, (tile_size // 2, tile_size // 2))
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-'''
 
 class Exit(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -562,12 +544,8 @@ player2 = Player2(100, screen_height - 120)
 blob_group = pygame.sprite.Group()
 platform_group = pygame.sprite.Group()
 lava_group = pygame.sprite.Group()
-#coin_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()
 
-#монетка в углу для счётв
-#score_coin = Coin(tile_size // 2, tile_size // 2)
-#coin_group.add(score_coin)
 
 #загрузка данных уровня и создание мира
 if path.exists(f'level{level}_data'):
@@ -623,9 +601,6 @@ while run:
             level_completed = False
     else:
         world.draw()
-        
-        #game_over = player.update(game_over)
-        #game_over = player2.update(game_over)
 
         if pygame.sprite.spritecollide(player, exit_group, False) and pygame.sprite.spritecollide(player2, exit_group, False):
                 game_over = 1
@@ -679,30 +654,6 @@ while run:
                 draw_text('YOU WIN!', font, blue, (screen_width // 2) - 140, screen_height // 2)
             else:
                 draw_text('LEVEL ' + str(level) + ' COMPLETED!', font_level_complete, blue, (screen_width // 2) - 250, screen_height // 2 -50)
-
-        '''
-        #если уровень пройден
-        if game_over == 1:
-            #обновим игру и перейдём к следующему уровню
-            level += 1
-            if level <= max_levels:
-                #обновление уровня
-                world_data = []
-                world = reset_level(level)
-                game_over = 0
-                player.reset(100, screen_height - 120)
-                player2.reset(100, screen_height - 120)
-            else:
-                draw_text('YOU WIN!', font, blue, (screen_width // 2) - 140, screen_height // 2)
-                #перезапустить игру
-                if restart_button.draw():
-                    level = 1
-                    #обновление уровня
-                    world_data = []
-                    world = reset_level(level)
-                    game_over = 0
-                    score = 0
-         '''
 
         # Show menu button to go back to level select
         if menu_button.draw():
