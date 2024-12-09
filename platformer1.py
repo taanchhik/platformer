@@ -1,4 +1,3 @@
-
 import pygame
 from pygame.locals import *
 from pygame import mixer
@@ -27,8 +26,8 @@ tile_size = 50
 game_over = 0
 main_menu = True
 level_select = False
-level = 0
-max_levels = 7
+level = 1
+max_levels = 2
 score = 0
 level_completed = False
 
@@ -547,12 +546,27 @@ platform_group = pygame.sprite.Group()
 lava_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()
 
+save_file = "save_game.dat"
+
+def load_progress():
+    try:
+        with open(save_file, "rb") as f:
+            return pickle.load(f)
+    except (FileNotFoundError, EOFError):
+        return 0 # Start at level 0 if no save file
+
+def save_progress(level):
+    with open(save_file, "wb") as f:
+        pickle.dump(level, f)
+
+highest_level = load_progress()
 
 #загрузка данных уровня и создание мира
 if path.exists(f'level{level}_data'):
     pickle_in = open(f'level{level}_data', 'rb')
     world_data = pickle.load(pickle_in)
 world = World(world_data)
+
 
 #создание кнопок
 restart_button = Button(screen_width // 2 - 50, screen_height // 2 - 495, restart_img)
@@ -571,9 +585,7 @@ world = World(world_data)
 
 run = True
 while run:
-
     clock.tick(fps)
-    
     screen.blit(bg_img, (0, 0))
     
     if main_menu == True and level_select == False: #если открыто меню
@@ -593,7 +605,7 @@ while run:
             run = True
             level_select = False
             level_completed = False
-        if level2_btn.draw() == True: #если нажата кнопка lvl2
+        if level2_btn.draw() == True and highest_level >= 1: #если нажата кнопка lvl2 и уровень 1 пройден
             level = 2
             world_data = []
             world = reset_level(level)
@@ -652,6 +664,9 @@ while run:
                 level_completed = False
 
         if level_completed:
+            if level > highest_level:
+                highest_level = level
+                save_progress(highest_level)
             if level == 1:
                 draw_text('LEVEL 1 COMPLETED!', font_level_complete, blue, (screen_width // 2) - 250, screen_height // 2 - 50)
             elif level == 2:
