@@ -1,3 +1,4 @@
+
 import pygame
 from pygame.locals import *
 from pygame import mixer
@@ -633,6 +634,8 @@ while run:
         if restart_button.draw():
             world = reset_level(level)
             game_over = 0
+            level_completed = False
+            
 
         # Check for level completion
         if pygame.sprite.spritecollide(player, exit_group, False) and pygame.sprite.spritecollide(player2, exit_group, False) and not level_completed:
@@ -646,6 +649,7 @@ while run:
                 world_data = []
                 world = reset_level(level)
                 game_over = 0
+                level_completed = False
 
         if level_completed:
             if level == 1:
