@@ -27,9 +27,8 @@ game_over = 0
 main_menu = True
 level_select = False
 level = 1
-max_levels = 2
-score = 0
 level_completed = False
+total_transformations_left = 2
 
 #colors
 white = (255, 255, 255)
@@ -62,8 +61,6 @@ game_over_fx.set_volume(0.5)
 def draw_text(text, font, text_col, x, y):
     '''Renders text on a Pygame screen.
 
-    This function renders the given text using the specified font, color, and position, and then blits (draws) it onto a Pygame screen surface.
-
     :param text: The text string to be rendered.
     :type text: str
     :param font: The Pygame font object to use for rendering.  Created using pygame.font.Font or pygame.font.SysFont.
@@ -74,6 +71,8 @@ def draw_text(text, font, text_col, x, y):
     :type x: int
     :param y: The y-coordinate (in pixels) of the top-left corner of the text on the screen.
     :type y: int
+    :returns: _____________________________________________________________________________________________________________________________________
+    :rtype:________________________________________________________________________________________________________________________________________
     :raises: AttributeError: if font is not a valid Pygame font object.
     :raises: TypeError: if text_col is not a 3-element tuple of integers.
     '''
@@ -83,12 +82,23 @@ def draw_text(text, font, text_col, x, y):
 
 #функция обновления уровня
 def reset_level(level):
-    player.reset(100, screen_height - 120)
-    player2.reset(130, screen_height - 120)
+    '''Resets the game level to the specified level number.
+
+    :param level: The number of the level to load (e.g., 1, 2, 3).
+    :type level: int
+    :returns: The newly created World object representing the loaded level.
+    :rtype: World
+    :raises: FileNotFoundError: If the level data file ('level{level}_data') does not exist.
+    :raises: EOFError: If the level data file is empty or corrupted.
+    :raises: pickle.UnpicklingError: If there is an error during unpickling the level data.
+    '''
+    player.reset(900, screen_height - 120)
+    player2.reset(100, screen_height - 120)
     blob_group.empty()
     platform_group.empty()
     lava_group.empty()
     exit_group.empty()
+    total_transformations_left = 2 if level == 1 else 1
 
     #загрузка данных уровня и создание мира
     if path.exists(f'level{level}_data'):
@@ -99,7 +109,7 @@ def reset_level(level):
     return world
 
 class Button():
-    def __init__(self, x, y, image):
+    def __init__(self, x, y, image): 
         self.image = image
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -130,16 +140,8 @@ class Player():
     def __init__(self, x, y):
         self.reset(x, y)
         self.parameters = {
-            "normal": {
-                "speed": 5,
-                "jump_height": 15,
-                "sprite_sheet": "pinky" # Префикс для файлов спрайтов
-            },
-            "super": {
-                "speed": 10,
-                "jump_height": 25,
-                "sprite_sheet": "frogpinky" # Префикс для файлов спрайтов
-            }
+            "normal": {"speed": 5, "jump_height": 15, "sprite_sheet": "pinky"},
+            "super": {"speed": 10, "jump_height": 25, "sprite_sheet": "frogpinky"}
         }
         self.current_parameter = "normal"
         self.load_sprites()
@@ -148,7 +150,7 @@ class Player():
         self.images_right = []
         self.images_left = []
         sprite_sheet_prefix = self.parameters[self.current_parameter]["sprite_sheet"]
-        for num in range(1, 5): # Предполагается 4 файла спрайта
+        for num in range(1, 5): 
             img_right = pygame.image.load(f'img/{sprite_sheet_prefix}{num}.png')
             img_right = pygame.transform.scale(img_right, (40, 70))
             img_left = pygame.transform.flip(img_right, True, False)
@@ -161,6 +163,7 @@ class Player():
         dy = 0
         walk_cooldown = 5
         col_thresh = 20
+
 
         if game_over == 0:
             #управление игроком
@@ -186,9 +189,12 @@ class Player():
                     self.image = self.images_right[self.index]
                 if self.direction == -1:
                     self.image = self.images_left[self.index]
-            if key[pygame.K_1]: # Кнопка 1 для переключения параметров
+            '''
+            global total_transformations_left
+            if key[pygame.K_1] and total_transformations_left > 0:
                 self.current_parameter = "super"
                 self.load_sprites()
+                total_transformations_left -= 1'''
             
             #гравитация
             self.vel_y += 1
@@ -234,10 +240,6 @@ class Player():
             if pygame.sprite.spritecollide(self, lava_group, False):
                 game_over = -1
                 game_over_fx.play()
-
-            #проверка на столкновение с выходом
-            #if pygame.sprite.spritecollide(self, exit_group, False):
-            #    game_over = 1
 
             #проверка на столкновение с платформой
             for platform in platform_group:
@@ -282,7 +284,7 @@ class Player():
         for num in range(1, 5):
             img_right = pygame.image.load(f'img/pinky{num}.png')
             img_right = pygame.transform.scale(img_right, (40, 70))
-            img_left = pygame.transform.flip(img_right, True, False) #переворачивание по оси X
+            img_left = pygame.transform.flip(img_right, True, False)
             self.images_right.append(img_right)
             self.images_left.append(img_left)
         self.dead_image = pygame.image.load('img/ghost.png')
@@ -297,6 +299,8 @@ class Player():
         self.jumped = False
         self.direction = 0
         self.in_air = True
+        self.current_parameter = "normal"
+        
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
@@ -306,21 +310,13 @@ class Player2():
     def __init__(self, x, y):
         self.reset(x, y)
         self.parameters = {
-            "normal": {
-                "speed": 5,
-                "jump_height": 15,
-                "sprite_sheet": "greeny"
-            },
-            "super": {
-                "speed": 10,
-                "jump_height": 25,
-                "sprite_sheet": "froggreeny"
-            }
+            "normal": {"speed": 5, "jump_height": 15, "sprite_sheet": "greeny"},
+            "super": {"speed": 10, "jump_height": 25, "sprite_sheet": "froggreeny"}
         }
         self.current_parameter = "normal"
-        self.load_sprites() # Добавьте загрузку спрайтов
+        self.load_sprites()
 
-    def load_sprites(self): # Аналогично для Player2
+    def load_sprites(self):
         self.images_right = []
         self.images_left = []
         sprite_sheet_prefix = self.parameters[self.current_parameter]["sprite_sheet"]
@@ -362,9 +358,12 @@ class Player2():
                     self.image = self.images_right[self.index]
                 if self.direction == -1:
                     self.image = self.images_left[self.index]
-            if key[pygame.K_0]: # Кнопка 1 для переключения параметров
+                    '''
+            global total_transformations_left
+            if key[pygame.K_0] and total_transformations_left > 0:
                 self.current_parameter = "super"
                 self.load_sprites()
+                total_transformations_left -= 1'''
             
             #гравитация
             self.vel_y += 1
@@ -410,10 +409,6 @@ class Player2():
             if pygame.sprite.spritecollide(self, lava_group, False):
                 game_over = -1
                 game_over_fx.play()
-
-            #проверка на столкновение с выходом
-            #if pygame.sprite.spritecollide(self, exit_group, False):
-            #    game_over = 1
 
             #проверка на столкновение с платформой
             for platform in platform_group:
@@ -473,6 +468,7 @@ class Player2():
         self.jumped = False
         self.direction = 0
         self.in_air = True
+        self.current_parameter = "normal"
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
@@ -626,7 +622,7 @@ def load_progress():
         with open(save_file, "rb") as f:
             return pickle.load(f)
     except (FileNotFoundError, EOFError):
-        return 0 # Start at level 0 if no save file
+        return 0
 
 def save_progress(level):
     with open(save_file, "wb") as f:
@@ -661,30 +657,31 @@ while run:
     clock.tick(fps)
     screen.blit(bg_img, (0, 0))
     
-    if main_menu == True and level_select == False: #если открыто меню
-        if exit_button.draw() == True: #если нажата кнопка exit
-            run = False #то выход из игры
-        if start_button.draw() == True: #если нажата кнопка старт
+    if main_menu == True and level_select == False:
+        if exit_button.draw() == True:
+            run = False
+        if start_button.draw() == True:
             main_menu = False
             level_select = True
     elif level_select == True and main_menu == False:
-        #если открыто меню с уровнями
-        if exit2_button.draw() == True: #если нажата кнопка exit
+        if exit2_button.draw() == True:
             run = False
-        if level1_btn.draw() == True: #если нажата кнопка lvl1
+        if level1_btn.draw() == True:
             level = 1
             world_data = []
             world = reset_level(level)
             run = True
             level_select = False
             level_completed = False
-        if level2_btn.draw() == True and highest_level >= 1: #если нажата кнопка lvl2 и уровень 1 пройден
+            total_transformations_left = 2
+        if level2_btn.draw() == True and highest_level >= 1:
             level = 2
             world_data = []
             world = reset_level(level)
             run = True
             level_select = False
             level_completed = False
+            total_transformations_left = 1
     else:
         world.draw()
 
@@ -694,15 +691,7 @@ while run:
         if game_over == 0:
             blob_group.update()
             platform_group.update()
-            #обновление счёта
-            '''
-            if pygame.sprite.spritecollide(player, coin_group, True):
-                score += 1
-                coin_fx.play()
-            if pygame.sprite.spritecollide(player2, coin_group, True):
-                score += 1
-                coin_fx.play()
-            draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)'''
+            draw_text(f"Transforms: {total_transformations_left}", font_score, white, 10, 10)
 
         blob_group.draw(screen)
         platform_group.draw(screen)
@@ -717,6 +706,7 @@ while run:
 
         # Always show restart button during gameplay
         if restart_button.draw():
+            total_transformations_left = 2 if level == 1 else 1
             player.current_parameter = "normal"
             player2.current_parameter = "normal"
             world = reset_level(level)
@@ -749,7 +739,7 @@ while run:
             else:
                 draw_text('LEVEL ' + str(level) + ' COMPLETED!', font_level_complete, blue, (screen_width // 2) - 250, screen_height // 2 -50)
 
-        # Show menu button to go back to level select
+        # если нажать кнопку меню
         if menu_button.draw():
             level_completed = False
             level_select = True
@@ -764,6 +754,16 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+        elif event.type == pygame.KEYDOWN: # Обработка нажатия клавиш
+            #global total_transformations_left
+            if event.key == pygame.K_1 and total_transformations_left > 0:
+                player.current_parameter = "super"
+                player.load_sprites()
+                total_transformations_left -= 1
+            elif event.key == pygame.K_0 and total_transformations_left > 0:
+                player2.current_parameter = "super"
+                player2.load_sprites()
+                total_transformations_left -= 1
     
     pygame.display.update() #обновление окна
     
