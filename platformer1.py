@@ -60,6 +60,23 @@ game_over_fx = pygame.mixer.Sound('img/game_over.wav')
 game_over_fx.set_volume(0.5)
 
 def draw_text(text, font, text_col, x, y):
+    '''Renders text on a Pygame screen.
+
+    This function renders the given text using the specified font, color, and position, and then blits (draws) it onto a Pygame screen surface.
+
+    :param text: The text string to be rendered.
+    :type text: str
+    :param font: The Pygame font object to use for rendering.  Created using pygame.font.Font or pygame.font.SysFont.
+    :type font: pygame.font.Font
+    :param text_col: The RGB color tuple for the text (e.g., (255, 0, 0) for red).
+    :type text_col: tuple[int, int, int]
+    :param x: The x-coordinate (in pixels) of the top-left corner of the text on the screen.
+    :type x: int
+    :param y: The y-coordinate (in pixels) of the top-left corner of the text on the screen.
+    :type y: int
+    :raises: AttributeError: if font is not a valid Pygame font object.
+    :raises: TypeError: if text_col is not a 3-element tuple of integers.
+    '''
     img = font.render(text, True, text_col)
     screen.blit(img, (x, y))
 
@@ -67,7 +84,7 @@ def draw_text(text, font, text_col, x, y):
 #функция обновления уровня
 def reset_level(level):
     player.reset(100, screen_height - 120)
-    player2.reset(100, screen_height - 120)
+    player2.reset(130, screen_height - 120)
     blob_group.empty()
     platform_group.empty()
     lava_group.empty()
@@ -112,6 +129,31 @@ class Button():
 class Player():
     def __init__(self, x, y):
         self.reset(x, y)
+        self.parameters = {
+            "normal": {
+                "speed": 5,
+                "jump_height": 15,
+                "sprite_sheet": "pinky" # Префикс для файлов спрайтов
+            },
+            "super": {
+                "speed": 10,
+                "jump_height": 25,
+                "sprite_sheet": "frogpinky" # Префикс для файлов спрайтов
+            }
+        }
+        self.current_parameter = "normal"
+        self.load_sprites()
+
+    def load_sprites(self):
+        self.images_right = []
+        self.images_left = []
+        sprite_sheet_prefix = self.parameters[self.current_parameter]["sprite_sheet"]
+        for num in range(1, 5): # Предполагается 4 файла спрайта
+            img_right = pygame.image.load(f'img/{sprite_sheet_prefix}{num}.png')
+            img_right = pygame.transform.scale(img_right, (40, 70))
+            img_left = pygame.transform.flip(img_right, True, False)
+            self.images_right.append(img_right)
+            self.images_left.append(img_left)
 
     def update(self, game_over):
 
@@ -125,7 +167,7 @@ class Player():
             key = pygame.key.get_pressed()
             if key[pygame.K_UP] and self.jumped == False and self.in_air == False:
                 jump_fx.play()
-                self.vel_y = -15
+                self.vel_y = -self.parameters[self.current_parameter]["jump_height"]
                 self.jumped = True
             if key[pygame.K_UP] == False:
                 self.jumped = False
@@ -144,6 +186,9 @@ class Player():
                     self.image = self.images_right[self.index]
                 if self.direction == -1:
                     self.image = self.images_left[self.index]
+            if key[pygame.K_1]: # Кнопка 1 для переключения параметров
+                self.current_parameter = "super"
+                self.load_sprites()
             
             #гравитация
             self.vel_y += 1
@@ -260,6 +305,31 @@ class Player():
 class Player2():
     def __init__(self, x, y):
         self.reset(x, y)
+        self.parameters = {
+            "normal": {
+                "speed": 5,
+                "jump_height": 15,
+                "sprite_sheet": "greeny"
+            },
+            "super": {
+                "speed": 10,
+                "jump_height": 25,
+                "sprite_sheet": "froggreeny"
+            }
+        }
+        self.current_parameter = "normal"
+        self.load_sprites() # Добавьте загрузку спрайтов
+
+    def load_sprites(self): # Аналогично для Player2
+        self.images_right = []
+        self.images_left = []
+        sprite_sheet_prefix = self.parameters[self.current_parameter]["sprite_sheet"]
+        for num in range(1, 5):
+            img_right = pygame.image.load(f'img/{sprite_sheet_prefix}{num}.png')
+            img_right = pygame.transform.scale(img_right, (40, 70))
+            img_left = pygame.transform.flip(img_right, True, False)
+            self.images_right.append(img_right)
+            self.images_left.append(img_left)
 
     def update(self, game_over):
         
@@ -273,7 +343,7 @@ class Player2():
             key = pygame.key.get_pressed()
             if key[pygame.K_w] and self.jumped == False and self.in_air == False:
                 jump_fx.play()
-                self.vel_y = -15
+                self.vel_y = -self.parameters[self.current_parameter]["jump_height"]
                 self.jumped = True
             if key[pygame.K_w] == False:
                 self.jumped = False
@@ -292,6 +362,9 @@ class Player2():
                     self.image = self.images_right[self.index]
                 if self.direction == -1:
                     self.image = self.images_left[self.index]
+            if key[pygame.K_0]: # Кнопка 1 для переключения параметров
+                self.current_parameter = "super"
+                self.load_sprites()
             
             #гравитация
             self.vel_y += 1
@@ -644,6 +717,8 @@ while run:
 
         # Always show restart button during gameplay
         if restart_button.draw():
+            player.current_parameter = "normal"
+            player2.current_parameter = "normal"
             world = reset_level(level)
             game_over = 0
             level_completed = False
