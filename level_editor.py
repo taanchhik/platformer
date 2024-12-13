@@ -1,4 +1,4 @@
-'''Заимствованный файл'''
+'''Заимствованный файл: https://github.com/russs123/Platformer/blob/master/level_editor.py'''
 import pygame
 import pickle
 from os import path
@@ -211,4 +211,4 @@ while run:
 	pygame.display.update()
 
 pygame.quit()
-'''Конец заимствованного файла'''
+'''Конец заимствованного файла:  https://github.com/russs123/Platformer/blob/master/level_editor.py'''
