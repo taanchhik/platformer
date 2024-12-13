@@ -14,8 +14,8 @@ fps = 60
 screen_width = 1000
 screen_height = 1000
 
-screen = pygame.display.set_mode((screen_width, screen_height)) #создание окна
-pygame.display.set_caption('Platformer') #название
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption('Platformer')
 
 #шрифт
 font = pygame.font.SysFont('Bauhaus 93', 70)
@@ -138,7 +138,7 @@ class Button():
         action = False
         pos = pygame.mouse.get_pos() #позиция курсора мыши
         if self.rect.collidepoint(pos): #условие наведения курсора мыши и нажатия на кнопку
-            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+            if pygame.mouse.get_pressed()[0] == 1 and not(self.clicked):
                 action = True
                 print('CLICKED')
                 self.clicked = True
@@ -210,11 +210,11 @@ class Player():
         if game_over == 0:
             #управление игроком
             key = pygame.key.get_pressed()
-            if key[pygame.K_UP] and self.jumped == False and self.in_air == False:
+            if key[pygame.K_UP] and not(self.jumped) and not(self.in_air):
                 jump_fx.play()
                 self.vel_y = -self.parameters[self.current_parameter]["jump_height"]
                 self.jumped = True
-            if key[pygame.K_UP] == False:
+            if not(key[pygame.K_UP]):
                 self.jumped = False
             if key[pygame.K_LEFT]:
                 dx -= 5
@@ -224,7 +224,7 @@ class Player():
                 dx += 5
                 self.counter += 1
                 self.direction = 1
-            if key[pygame.K_LEFT] == False and key[pygame.K_RIGHT] == False:
+            if not(key[pygame.K_LEFT]) and not(key[pygame.K_RIGHT]):
                 self.counter = 0
                 self.index = 0
                 if self.direction == 1:
@@ -411,11 +411,11 @@ class Player2():
         if game_over == 0:
             #управление игроком 2
             key = pygame.key.get_pressed()
-            if key[pygame.K_w] and self.jumped == False and self.in_air == False:
+            if key[pygame.K_w] and not(self.jumped) and not(self.in_air):
                 jump_fx.play()
                 self.vel_y = -self.parameters[self.current_parameter]["jump_height"]
                 self.jumped = True
-            if key[pygame.K_w] == False:
+            if not(key[pygame.K_w]):
                 self.jumped = False
             if key[pygame.K_a]:
                 dx -= 5
@@ -425,7 +425,7 @@ class Player2():
                 dx += 5
                 self.counter += 1
                 self.direction = 1
-            if key[pygame.K_a] == False and key[pygame.K_d] == False:
+            if not(key[pygame.K_a]) and not(key[pygame.K_d]):
                 self.counter = 0
                 self.index = 0
                 if self.direction == 1:
@@ -558,7 +558,7 @@ class World():
     def __init__(self, data):
         '''Инициализирует объект World
 
-        :param data: Cписок, представляющий структуру уровня. Каждый элемент в списке соответствует типу плитки
+        :param data: Файл со списком, представляющим союой структуру уровня. Каждый элемент в списке соответствует типу плитки
         :type data: pickle file
         :returns: None
         :rtype: None
@@ -732,6 +732,7 @@ class Exit(pygame.sprite.Sprite):
         :type x: int
         :param y: Начальная координата y выхода
         :type y: int
+        :raises TypeError: Если координаты не являются целыми числами
         :raises FileNotFoundError: Если файл изображения 'img/exit.png' не найден
         :raises pygame.error: Если произошла ошибка при загрузке или масштабировании изображения
         '''
@@ -772,8 +773,10 @@ def save_progress(level):
 
     :param level: Текущий уровень, который нужно сохранить
     :type level: int
-    :raises TypeError: если уровень не является целым числом
+    :raises TypeError: Если уровень не является целым числом
     '''
+    if not isinstance(level, int):
+        raise TypeError("Уровень должен быть целым числом")
     with open(save_file, "wb") as f:
         pickle.dump(level, f)
 
@@ -794,23 +797,17 @@ level1_btn = Button(screen_width // 2 - 350, screen_height // 2, level1_img)
 level2_btn = Button(screen_width // 2 + 100, screen_height // 2, level2_img)
 menu_button = Button(screen_width - 125, 5, menu_img)
 
-if path.exists(f'level{level}_data'):
-    pickle_in = open(f'level{level}_data', 'rb')
-    world_data = pickle.load(pickle_in)
-world = World(world_data)
-
 run = True
 while run:
     clock.tick(fps)
     screen.blit(bg_img, (0, 0))
-    
-    if main_menu == True and level_select == False:
+    if main_menu and not(level_select):
         if exit_button.draw() == True:
             run = False
         if start_button.draw() == True:
             main_menu = False
             level_select = True
-    elif level_select == True and main_menu == False:
+    elif level_select and not(main_menu):
         if exit2_button.draw() == True:
             run = False
         if level1_btn.draw() == True:
@@ -831,27 +828,18 @@ while run:
             total_transformations_left = 1
     else:
         world.draw()
-
-        if pygame.sprite.spritecollide(player, exit_group, False) and pygame.sprite.spritecollide(player2, exit_group, False):
-                game_over = 1
-                
         if game_over == 0:
             blob_group.update()
             platform_group.update()
             draw_text(f"Transforms: {total_transformations_left}", font_score, white, 10, 10)
-
         blob_group.draw(screen)
         platform_group.draw(screen)
         lava_group.draw(screen)
         exit_group.draw(screen)
-
         game_over = player.update(game_over)
         game_over = player2.update(game_over)
-
         player.draw(screen)
         player2.draw(screen)
-
-        # Always show restart button during gameplay
         if restart_button.draw():
             total_transformations_left = 2 if level == 1 else 1
             player.current_parameter = "normal"
@@ -859,21 +847,16 @@ while run:
             world = reset_level(level)
             game_over = 0
             level_completed = False
-
-        # Check for level completion
-        if pygame.sprite.spritecollide(player, exit_group, False) and pygame.sprite.spritecollide(player2, exit_group, False) and not level_completed:
+        if menu_button.draw():
+            level_completed = False
+            level_select = True
+            main_menu = False
+            game_over = 0
+        if pygame.sprite.spritecollide(player, exit_group, False) and pygame.sprite.spritecollide(player2, exit_group, False) and not(level_completed):
             level_completed = True
-            #game_over = 1
-                
-        #если игрок умер
+            game_over = 1
         if game_over == -1:
             draw_text('GAME OVER!', font, blue, (screen_width // 2) - 200, screen_height // 2)
-            if restart_button.draw():
-                world_data = []
-                world = reset_level(level)
-                game_over = 0
-                level_completed = False
-
         if level_completed:
             if level > highest_level:
                 highest_level = level
@@ -883,24 +866,12 @@ while run:
             elif level == 2:
                 draw_text('YOU WIN!', font, blue, (screen_width // 2) - 140, screen_height // 2)
             else:
-                draw_text('LEVEL ' + str(level) + ' COMPLETED!', font_level_complete, blue, (screen_width // 2) - 250, screen_height // 2 -50)
+                draw_text('LEVEL ' + str(level) + ' COMPLETED!', font_level_complete, blue, (screen_width // 2) - 250, screen_height // 2 - 50)
 
-        # если нажать кнопку меню
-        if menu_button.draw():
-            level_completed = False
-            level_select = True
-            main_menu = False
-            game_over = 0
-            
-        if restart_button.draw():
-            world = reset_level(level)
-            game_over = 0
-            level_completed = False
-    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-        elif event.type == pygame.KEYDOWN: # Обработка нажатия клавиш
+        elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_1 and total_transformations_left > 0:
                 player.current_parameter = "super"
                 player.load_sprites()
@@ -909,6 +880,6 @@ while run:
                 player2.current_parameter = "super"
                 player2.load_sprites()
                 total_transformations_left -= 1
-    pygame.display.update() #обновление окна
+    pygame.display.update()
     
 pygame.quit()
