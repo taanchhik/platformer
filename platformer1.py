@@ -826,8 +826,11 @@ while run:
             level_select = False
             level_completed = False
             total_transformations_left = 1
+            game_over = 0
     else:
         world.draw()
+        if pygame.sprite.spritecollide(player, exit_group, False) and pygame.sprite.spritecollide(player2, exit_group, False):
+                level_completed = True
         if game_over == 0:
             blob_group.update()
             platform_group.update()
