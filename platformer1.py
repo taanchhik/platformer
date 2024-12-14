@@ -136,15 +136,15 @@ class Button():
         :raises AttributeError: Может быть выброшено, если self.image или self.rect не являются валидными объектами Pygame
         '''
         action = False
-        pos = pygame.mouse.get_pos() #позиция курсора мыши
-        if self.rect.collidepoint(pos): #условие наведения курсора мыши и нажатия на кнопку
+        pos = pygame.mouse.get_pos()
+        if self.rect.collidepoint(pos):
             if pygame.mouse.get_pressed()[0] == 1 and not(self.clicked):
                 action = True
                 print('CLICKED')
                 self.clicked = True
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
-        screen.blit(self.image, self.rect) #нарисуем кнопку
+        screen.blit(self.image, self.rect)
         return action
 
 
@@ -249,55 +249,41 @@ class Player():
             #проверка на столкновение
             self.in_air = True
             for tile in world.tile_list:
-                #проверка на столконвение по оси X
                 if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                     dx = 0
-                #проверка на столконвение по оси Y
                 if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                    #находится ли игрок под землёй (прыжок)
                     if self.vel_y < 0:
                         dy = tile[1].bottom - self.rect.top
                         self.vel_y = 0
-                    #находится ли игрок над землёй (падение)
                     elif self.vel_y >= 0:
                         dy = tile[1].top - self.rect.bottom
                         self.vel_y = 0
                         self.in_air = False
-            #проверка на столкновение с врагами
             if pygame.sprite.spritecollide(self, blob_group, False):
                 game_over = -1
                 game_over_fx.play()
-            #проверка на столкновение с лавой
             if pygame.sprite.spritecollide(self, lava_group, False):
                 game_over = -1
                 game_over_fx.play()
-            #проверка на столкновение с платформой
             for platform in platform_group:
-                #столкновения по оси X
                 if platform.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                     dx = 0
-                #столкновения по оси Y
                 if platform.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                    #проверка, есть ли над игроком платформа
                     if abs((self.rect.top + dy) - platform.rect.bottom) < col_thresh:
                         self.vel_y = 0
                         dy = platform.rect.bottom - self.rect.top
-                    #проверка, есть ли под игроком платформа
                     elif abs((self.rect.bottom + dy) - platform.rect.top) < col_thresh:
                         self.rect.bottom = platform.rect.top - 1
                         dy = 0
                         self.in_air = False
-                    #вбок вместе с платформой
                     if platform.move_x != 0:
                         self.rect.x += platform.move_direction
-            #отрегулировать позицию игрока
             self.rect.x += dx
             self.rect.y += dy
         elif game_over == -1:
             self.image = self.dead_image
             if self.rect.y > 200:
                 self.rect.y -= 5
-        #нарисуем игрока в окне
         screen.blit(self.image, self.rect)
         return game_over
 
@@ -450,55 +436,41 @@ class Player2():
             #проверка на столкновение
             self.in_air = True
             for tile in world.tile_list:
-                #проверка на столконвение по оси X
                 if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                     dx = 0
-                #проверка на столконвение по оси Y
                 if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                    #находится ли игрок под землёй (прыжок)
                     if self.vel_y < 0:
                         dy = tile[1].bottom - self.rect.top
                         self.vel_y = 0
-                    #находится ли игрок над землёй (падение)
                     elif self.vel_y >= 0:
                         dy = tile[1].top - self.rect.bottom
                         self.vel_y = 0
                         self.in_air = False
-            #проверка на столкновение с врагами
             if pygame.sprite.spritecollide(self, blob_group, False):
                 game_over = -1
                 game_over_fx.play()
-            #проверка на столкновение с лавой
             if pygame.sprite.spritecollide(self, lava_group, False):
                 game_over = -1
                 game_over_fx.play()
-            #проверка на столкновение с платформой
             for platform in platform_group:
-                #столкновения по оси X
                 if platform.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                     dx = 0
-                #столкновения по оси Y
                 if platform.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                    #проверка, есть ли над игроком платформа
                     if abs((self.rect.top + dy) - platform.rect.bottom) < col_thresh:
                         self.vel_y = 0
                         dy = platform.rect.bottom - self.rect.top
-                    #проверка, есть ли под игроком платформа
                     elif abs((self.rect.bottom + dy) - platform.rect.top) < col_thresh:
                         self.rect.bottom = platform.rect.top - 1
                         dy = 0
                         self.in_air = False
-                    #вбок вместе с платформой
                     if platform.move_x != 0:
                         self.rect.x += platform.move_direction
-            #отрегулировать позицию игрока
             self.rect.x += dx
             self.rect.y += dy
         elif game_over == -1:
             self.image = self.dead_image
             if self.rect.y > 200:
                 self.rect.y -= 5
-        #нарисуем игрока в окне
         screen.blit(self.image, self.rect)
         return game_over
 
@@ -521,7 +493,7 @@ class Player2():
         for num in range(1, 5):
             img_right = pygame.image.load(f'img/greeny{num}.png')
             img_right = pygame.transform.scale(img_right, (40, 70))
-            img_left = pygame.transform.flip(img_right, True, False) #переворачивание по оси X
+            img_left = pygame.transform.flip(img_right, True, False)
             self.images_right.append(img_right)
             self.images_left.append(img_left)
         self.dead_image = pygame.image.load('img/ghost.png')
