@@ -7,6 +7,7 @@ import pickle
 import platformer1
 
 from os import path
+import builtins
 from unittest.mock import MagicMock, patch, mock_open
 from platformer1 import draw_text, reset_level, Button, Player, Player2, World, Enemy, Platform, Lava, Exit, load_progress, save_progress
 pygame.init()
@@ -56,20 +57,6 @@ class TestGameFunctions(unittest.TestCase):
         level = load_progress()
         self.assertEqual(level, 0)
 
-    def setUp(self):
-        '''Выполняется перед каждым тестом'''
-        pygame.font.init() # инициализируем шрифт pygame, если он ещё не инициализирован
-        self.font = pygame.font.SysFont(None, 36) #создаём шрифт
-
-    def tearDown(self):
-        '''Выполняется после каждого теста'''
-        pygame.font.quit()
-
-    def test_draw_text_negative(self):
-        """Отрицательный тест 2: Некорректный объект шрифта."""
-        with self.assertRaises(AttributeError):
-            draw_text("Test", "not a font", (255, 255, 255), 10, 10) #Шрифт - строка, а не объект
-
     @patch('pickle.dump')
     @patch('builtins.open', new_callable=mock_open)
     def test_save_progress_success(self, mock_file, mock_pickle_dump):
@@ -96,12 +83,12 @@ class TestGameFunctions(unittest.TestCase):
         mock_load.return_value = mock_image
         mock_scale.return_value = mock_image
         mock_flip.return_value = mock_image
-        player = Player(0,0)  # Инициализируем Player, чтобы вызвать load_sprites
+        player = Player(0,0)
         self.assertEqual(len(player.images_right), 4)
         self.assertEqual(len(player.images_left), 4)
-        mock_load.assert_called() #проверим, что load вызывался
-        mock_scale.assert_called() #проверим, что scale вызывался
-        mock_flip.assert_called() #проверим, что flip вызывался
+        mock_load.assert_called()
+        mock_scale.assert_called()
+        mock_flip.assert_called()
 
     @patch('pygame.image.load', side_effect=FileNotFoundError)
     def test_load_sprites_file_not_found(self, mock_load):
@@ -142,6 +129,19 @@ class TestGameFunctions(unittest.TestCase):
         player.load_sprites()
         self.assertEqual(len(player.images_right), 4)
         self.assertEqual(len(player.images_left), 4)
+
+    def setUp(self):
+        '''Выполняется перед тестом'''
+        pygame.font.init()
+        self.font = pygame.font.SysFont(None, 36)
+
+    def tearDown(self):
+        '''Выполняется после теста'''
+        pygame.font.quit()
+
+    def test_draw_text_negative(self):
+        with self.assertRaises(AttributeError):
+            draw_text("Test", "not a font", (255, 255, 255), 10, 10)
 
 
 if __name__ == '__main__':
