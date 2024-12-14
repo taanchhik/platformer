@@ -130,18 +130,12 @@ class TestGameFunctions(unittest.TestCase):
         self.assertEqual(len(player.images_right), 4)
         self.assertEqual(len(player.images_left), 4)
 
-    def setUp(self):
-        '''Выполняется перед тестом'''
+    def test_draw_text_negative(self):
         pygame.font.init()
         self.font = pygame.font.SysFont(None, 36)
-
-    def tearDown(self):
-        '''Выполняется после теста'''
-        pygame.font.quit()
-
-    def test_draw_text_negative(self):
         with self.assertRaises(AttributeError):
             draw_text("Test", "not a font", (255, 255, 255), 10, 10)
+        pygame.font.quit()
 
 
 if __name__ == '__main__':
